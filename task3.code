@@ -1,0 +1,79 @@
+
+import os
+import pandas as pd
+import kagglehub
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# -------------------------------
+# Step 1: Download Dataset
+# -------------------------------
+path = kagglehub.dataset_download("grouplens/movielens-20m-dataset")
+print("✅ Dataset downloaded to:", path)
+
+movies_file = os.path.join(path, "movie.csv")
+movies = pd.read_csv(movies_file)
+print("✅ Movies dataset shape:", movies.shape)
+
+# -------------------------------
+# Step 2: Preprocessing
+# -------------------------------
+movies['genres'] = movies['genres'].fillna('')
+vectorizer = TfidfVectorizer(token_pattern='[a-zA-Z0-9]+')
+tfidf_matrix = vectorizer.fit_transform(movies['genres'])
+
+# -------------------------------
+# Step 3: Content-Based Recommendation
+# -------------------------------
+def recommend_movie(movie_title, top_n=5):
+    if movie_title not in movies['title'].values:
+        return f"❌ Movie '{movie_title}' not found."
+    idx = movies[movies['title'] == movie_title].index[0]
+    cosine_sim = cosine_similarity(tfidf_matrix[idx], tfidf_matrix).flatten()
+    sim_scores = list(enumerate(cosine_sim))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:top_n+1]
+    rec_indices = [i[0] for i in sim_scores]
+    return movies['title'].iloc[rec_indices].tolist()
+
+# -------------------------------
+# Step 4: Genre Filtering
+# -------------------------------
+def get_movies_by_genre(genre, limit=20):
+    genre_movies = movies[movies['genres'].str.contains(genre, case=False, na=False)]
+    if genre_movies.empty:
+        return f"❌ No movies found for genre '{genre}'"
+    return genre_movies['title'].head(limit).tolist()
+
+# -------------------------------
+# Step 5: Interactive User Input
+# -------------------------------
+while True:
+    choice = input("\nType 'movie' for recommendations or 'genre' for filtering (or 'exit' to quit): ")
+
+    if choice.lower() == "exit":
+        print("👋 Exiting Movie System.")
+        break
+
+    elif choice.lower() == "movie":
+        title = input("🎬 Enter a movie title: ")
+        print("Recommendations:", recommend_movie(title, 5))
+
+    elif choice.lower() == "genre":
+        genre = input("🎥 Enter a genre (e.g., Adventure, Comedy, Romance): ")
+        result = get_movies_by_genre(genre, 20)
+        print(f"\nMovies in Genre '{genre}':")
+        if isinstance(result, list):
+            for m in result:
+                print(" -", m)
+        else:
+            print(result)
+
+
+
+
+
+
+
+
+✅ Dataset downloaded to: C:\Users\Sameer\.cache\kagglehub\datasets\grouplens\movielens-20m-dataset\versions\1
+✅ Movies dataset shape: (27278, 3)
