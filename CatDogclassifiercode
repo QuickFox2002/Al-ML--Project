@@ -1,0 +1,106 @@
+# =====================================
+# Task 2: Cats vs Dogs (Balanced Loader)
+# Dataset: Dogs vs Cats
+# Kaggle Link: https://www.kaggle.com/datasets/salader/dogs-vs-cats
+# =====================================
+
+import os
+import cv2
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import kagglehub
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+
+# -------------------------------
+# Reusable Balanced Loader
+# -------------------------------
+def load_balanced_images(base_path, class_keywords, per_class=1000, img_size=(32,32)):
+    """
+    Load a balanced dataset of images.
+    Parameters:
+        base_path (str): Root folder containing images.
+        class_keywords (list): List of keywords for each class, e.g. ["cat", "dog"].
+        per_class (int): Number of images per class.
+        img_size (tuple): Resize images to this size (H, W).
+    Returns:
+        X (np.array): Image data (N, features).
+        y (np.array): Labels (N,).
+        counts (dict): Number of samples per class.
+    """
+    data, labels = [], []
+    class_counts = {kw: 0 for kw in class_keywords}
+    
+    for root, dirs, files in os.walk(base_path):
+        for file in files:
+            if file.lower().endswith((".jpg", ".png", ".jpeg")):
+                fpath = os.path.join(root, file)
+                fname = file.lower()
+                
+                for idx, kw in enumerate(class_keywords):
+                    if kw in fname and class_counts[kw] < per_class:
+                        img = cv2.imread(fpath)
+                        if img is None:
+                            continue
+                        img = cv2.resize(img, img_size)
+                        
+                        data.append(img.flatten())
+                        labels.append(idx)
+                        class_counts[kw] += 1
+                # Stop if enough per class
+                if all(count >= per_class for count in class_counts.values()):
+                    break
+        if all(count >= per_class for count in class_counts.values()):
+            break
+    
+    X = np.array(data)
+    y = np.array(labels)
+    return X, y, class_counts
+
+# -------------------------------
+# Step 1: Download dataset
+# -------------------------------
+path = kagglehub.dataset_download("salader/dogs-vs-cats")
+print("✅ Dataset downloaded to:", path)
+
+train_path = os.path.join(path, "train")
+if not os.path.exists(train_path):
+    train_path = path
+print("✅ Using images from:", train_path)
+
+# -------------------------------
+# Step 2: Load balanced Cats vs Dogs
+# -------------------------------
+X, y, counts = load_balanced_images(train_path, ["cat", "dog"], per_class=1000)
+print("✅ Data loaded:", X.shape, y.shape)
+print("Class counts:", counts)
+
+# -------------------------------
+# Step 3: Train-test split
+# -------------------------------
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# -------------------------------
+# Step 4: Train Logistic Regression
+# -------------------------------
+model = LogisticRegression(max_iter=500)
+model.fit(X_train, y_train)
+
+# -------------------------------
+# Step 5: Evaluation
+# -------------------------------
+y_pred = model.predict(X_test)
+
+print("\n📌 Logistic Regression Results")
+print(classification_report(y_test, y_pred, digits=3))
+
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+plt.title("Cats vs Dogs - Logistic Regression")
+plt.xlabel("Predicted")
+plt.ylabel("True")
+plt.show()
