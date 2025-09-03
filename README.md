@@ -1,34 +1,41 @@
-## 📌 Task 1 — Spam SMS Classifier (NLP with Scikit-learn)
+
+## 📌 Task 2 — Plant Disease Image Classifier (CNN with TensorFlow or PyTorch)
 
 ### 🎯 Goal
-Build a classifier that predicts whether a given SMS message is **Spam** or **Ham** (Not Spam).
+Train an image classifier that detects plant disease in **bean leaves**:
+- Healthy  
+- Bean Rust  
+- Angular Leaf Spot  
 
 ### 🔧 Tools
-- pandas, numpy  
+- TensorFlow **or** PyTorch + torchvision  
+- matplotlib  
 - scikit-learn  
-- matplotlib / seaborn  
 
 ### 📂 Dataset
-- [UCI SMS Spam Collection Dataset](https://archive.ics.uci.edu/ml/datasets/sms+spam+collection)  
-- Download manually as `spam.csv`.
+- [Beans Dataset – Hugging Face](https://huggingface.co/datasets/beans)  
+- ~1,000 leaf images categorized into 3 classes.
 
 ### 🚀 Steps
-1. Load dataset with **pandas**.  
-2. Explore spam vs ham message counts.  
-3. Preprocess text: lowercase, remove punctuation & stopwords, tokenize.  
-4. Convert text to vectors using **TF-IDF (TfidfVectorizer)**.  
-5. Split dataset into **train/test**.  
-6. Train classifier (**Logistic Regression / Naive Bayes / SVM**).  
-7. Evaluate with:
-   - Accuracy  
-   - Precision, Recall, F1-score  
-   - Confusion Matrix  
-8. Save model with **joblib**.  
-9. Write a script that:
-   - Takes user input (`input()`)  
-   - Predicts spam/ham using the trained model.  
+1. Download dataset and organize folders:
+2. Load dataset:
+- `ImageDataGenerator` (TensorFlow)  
+- OR `ImageFolder` (PyTorch)  
+3. Resize images → **128x128**.  
+4. Normalize pixel values → `[0, 1]`.  
+5. Build a CNN:
+- Conv → ReLU → MaxPool  
+- Conv → ReLU → MaxPool  
+- Dense → Softmax (3 classes)  
+6. Train for **10–15 epochs**.  
+7. Evaluate on test set:
+- Accuracy  
+- Confusion Matrix  
+8. Plot **training loss & accuracy curves**.  
+9. Save trained model → `.h5` (TensorFlow) or `.pt` (PyTorch).  
+10. Write a script to load model and predict from an **image file**.  
 
 ### 📦 Deliverables
-- `spam_classifier.py` → Training code  
-- `spam_model.pkl` → Saved model  
-- `predict.py` → Script for testing new messages
+- `plant_classifier.py` → Training code  
+- `plant_model.h5` / `plant_model.pt` → Saved model  
+- `predict_image.py` → Script to test single image
